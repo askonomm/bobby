@@ -37,16 +37,119 @@ app.run().ok();
 
 ### App configuration
 
-To be written.
+Bobby can be configured using `with_` methods.
+
+#### Address and port
+
+To have Bobby listen on a given address and port, use the `with_address` method:
+
+```rust
+app.with_address([127, 0, 0, 1], 3333);
+```
+
+If you don't configure this then Bobby will listen on address `127.0.0.1` and port `8080` by default.
 
 ### Routing
 
-To be written.
+Routes are added to the instance of `Bobby` by calling route related methods. An example route looks like this:
+
+```rust
+app.get("/", |req| {
+  Response::html("Hello, World.")
+});
+```
+
+Supported methods are:
+
+- `get`
+- `post`
+- `put`
+- `delete`
+- `patch`
+- `options`
+- `head`
 
 ### Requests
 
-To be written.
+Each route function gets a `Request` instance passed to it as its single argument. 
+
+#### Method
+
+You can see the incoming request' method:
+
+```rust
+app.get("/", |req: Request| {
+  let method = req.method();
+});
+```
+
+#### URI
+
+You can see the incoming request' URI:
+
+```rust
+app.get("/", |req: Request| {
+  let uri = req.uri();
+});
+```
+
+#### Parameters
+
+You can get the route parameters:
+
+```rust
+app.get("/hello/{who}", |req: Request| {
+  let who = req.param("who");
+});
+```
 
 ### Responses
 
-To be written.
+Each route must return an instance of `Response`.
+
+#### Response: HTML
+
+You can return a HTML response:
+
+```rust
+app.get("/", |req: Request| {
+  Response::html("Hello, World.")
+});
+```
+
+#### Response: JSON
+
+You can return a JSON response:
+
+```rust
+use serde_json::json;
+
+app.get("/", |req: Request| {
+  Response::json(json!({
+    "name": "John"
+  }))
+});
+```
+
+#### Setting headers
+
+You can set the response headers:
+
+```rust
+app.get("/", |req| {
+  Response::html("Hello, World.")
+    .with_header("Content-Type", "text/html")
+});
+```
+
+#### Setting status code
+
+You can set the response status:
+
+```rust
+app.get("/", |req| {
+  Response::html("Not found.")
+    .with_header("Content-Type", "text/html")
+    .with_status(404)
+});
+```
