@@ -342,7 +342,7 @@ impl Bobby {
 
     pub fn run(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let rt = tokio::runtime::Runtime::new()?;
-        println!("Listening on http://{}:{} ...", self.ip, self.port);
+        println!("Listening on {}:{} ...", self.ip, self.port);
         rt.block_on(self.listen())
     }
 }
