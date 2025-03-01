@@ -44,6 +44,14 @@ impl Request {
         }
     }
 
+    pub fn method(&self) -> &hyper::Method {
+        &self.method
+    }
+
+    pub fn uri(&self) -> &hyper::Uri {
+        &self.uri
+    }
+
     pub fn param(&self, name: &str) -> Option<&String> {
         self.params.get(name)
     }
@@ -167,6 +175,54 @@ impl Bobby {
     pub fn get(&mut self, path: impl Into<String>, callable: fn(req: Request) -> Response) {
         self.routes.push(Route {
             method: hyper::Method::GET,
+            path: path.into(),
+            callable,
+        });
+    }
+
+    pub fn post(&mut self, path: impl Into<String>, callable: fn(req: Request) -> Response) {
+        self.routes.push(Route {
+            method: hyper::Method::POST,
+            path: path.into(),
+            callable,
+        });
+    }
+
+    pub fn put(&mut self, path: impl Into<String>, callable: fn(req: Request) -> Response) {
+        self.routes.push(Route {
+            method: hyper::Method::PUT,
+            path: path.into(),
+            callable,
+        });
+    }
+
+    pub fn delete(&mut self, path: impl Into<String>, callable: fn(req: Request) -> Response) {
+        self.routes.push(Route {
+            method: hyper::Method::DELETE,
+            path: path.into(),
+            callable,
+        });
+    }
+
+    pub fn patch(&mut self, path: impl Into<String>, callable: fn(req: Request) -> Response) {
+        self.routes.push(Route {
+            method: hyper::Method::PATCH,
+            path: path.into(),
+            callable,
+        });
+    }
+
+    pub fn options(&mut self, path: impl Into<String>, callable: fn(req: Request) -> Response) {
+        self.routes.push(Route {
+            method: hyper::Method::OPTIONS,
+            path: path.into(),
+            callable,
+        });
+    }
+
+    pub fn head(&mut self, path: impl Into<String>, callable: fn(req: Request) -> Response) {
+        self.routes.push(Route {
+            method: hyper::Method::HEAD,
             path: path.into(),
             callable,
         });
