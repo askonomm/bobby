@@ -10,7 +10,7 @@ Add Bobby to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bobby = "0.0.1"
+bobby = "0.0.2"
 ```
 
 ## Usage
@@ -78,7 +78,7 @@ Each route function gets a `Request` instance passed to it as its single argumen
 You can see the incoming request' method:
 
 ```rust
-app.get("/", |req: Request| {
+app.get("/", |req| {
   let method = req.method();
 });
 ```
@@ -88,7 +88,7 @@ app.get("/", |req: Request| {
 You can see the incoming request' URI:
 
 ```rust
-app.get("/", |req: Request| {
+app.get("/", |req| {
   let uri = req.uri();
 });
 ```
@@ -98,7 +98,7 @@ app.get("/", |req: Request| {
 You can get the route parameters:
 
 ```rust
-app.get("/hello/{who}", |req: Request| {
+app.get("/hello/{who}", |req| {
   let who = req.param("who");
 });
 ```
@@ -107,24 +107,24 @@ app.get("/hello/{who}", |req: Request| {
 
 Each route must return an instance of `Response`.
 
-#### Response: HTML
+#### Response: `HTML`
 
 You can return a HTML response:
 
 ```rust
-app.get("/", |req: Request| {
+app.get("/", |req| {
   Response::html("Hello, World.")
 });
 ```
 
-#### Response: JSON
+#### Response: `JSON`
 
 You can return a JSON response:
 
 ```rust
 use serde_json::json;
 
-app.get("/", |req: Request| {
+app.get("/", |req| {
   Response::json(json!({
     "name": "John"
   }))
