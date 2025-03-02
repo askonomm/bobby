@@ -32,7 +32,7 @@ app.get("/some/{thing?}", |_| Response::html("An optional route part."));
 app.get("/other/{thing}", |_| Response::html("A non-optional route part."));
 
 // Run
-app.run().ok();
+app.run();
 ```
 
 ### App configuration
@@ -48,6 +48,33 @@ app.with_address([127, 0, 0, 1], 3333);
 ```
 
 If you don't configure this then Bobby will listen on address `127.0.0.1` and port `8080` by default.
+
+#### Logging
+
+Bobby has built-in support for logging with the [log](https://crates.io/crates/log) interface, so you could use any logging library that supports it to generate logs.
+
+An example with using the [env_logger](https://crates.io/crates/env_logger) library:
+
+```rust
+let mut logger = env_logger::Builder::from_default_env();
+logger.target(env_logger::Target::Stdout);
+logger.init();
+
+let mut app = Bobby::new();
+
+// and so forth ...
+```
+
+Would then generate the following output in your `stdout`:
+
+```stdout
+[2025-03-02T14:05:51Z INFO  bobby::bobby] Listening on 127.0.0.1:3112 ...
+[2025-03-02T14:05:56Z INFO  bobby::bobby] HTTP/1.1 GET /
+[2025-03-02T14:05:57Z INFO  bobby::bobby] HTTP/1.1 GET /
+[2025-03-02T14:05:57Z INFO  bobby::bobby] HTTP/1.1 GET /
+[2025-03-02T14:06:01Z INFO  bobby::bobby] HTTP/1.1 GET /asd
+[2025-03-02T14:06:01Z WARN  bobby::bobby] HTTP/1.1 GET /asd - Not found
+```
 
 ### Routing
 
