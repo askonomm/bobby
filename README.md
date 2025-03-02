@@ -10,7 +10,7 @@ Add Bobby to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bobby = "0.1.1"
+bobby = "0.1.2"
 ```
 
 ## Usage
