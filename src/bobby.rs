@@ -3,6 +3,7 @@ use hyper_util::{
     rt::TokioIo,
     server::conn::auto::{self},
 };
+use log::{debug, error, info, trace, warn};
 use std::{
     collections::HashMap,
     net::{IpAddr, SocketAddr},
@@ -228,13 +229,55 @@ impl Bobby {
         });
     }
 
-    fn log_request(&self, request: &hyper::Request<hyper::body::Incoming>) {
-        println!(
-            "{http:?} {method} {path}",
-            http = request.version(),
-            method = request.method(),
-            path = request.uri()
-        );
+    fn log_request(
+        &self,
+        request: &hyper::Request<hyper::body::Incoming>,
+        level: log::Level,
+        message: impl Into<String>,
+    ) {
+        let mut msg = message.into();
+
+        if !msg.is_empty() {
+            msg = format!(" - {}", msg);
+        }
+
+        match level {
+            log::Level::Info => info!(
+                "{http:?} {method} {path}{message}",
+                http = request.version(),
+                method = request.method(),
+                path = request.uri(),
+                message = msg
+            ),
+            log::Level::Warn => warn!(
+                "{http:?} {method} {path}{message}",
+                http = request.version(),
+                method = request.method(),
+                path = request.uri(),
+                message = msg
+            ),
+            log::Level::Debug => debug!(
+                "{http:?} {method} {path}{message}",
+                http = request.version(),
+                method = request.method(),
+                path = request.uri(),
+                message = msg
+            ),
+            log::Level::Trace => trace!(
+                "{http:?} {method} {path}{message}",
+                http = request.version(),
+                method = request.method(),
+                path = request.uri(),
+                message = msg
+            ),
+            log::Level::Error => error!(
+                "{http:?} {method} {path}{message}",
+                http = request.version(),
+                method = request.method(),
+                path = request.uri(),
+                message = msg
+            ),
+        }
     }
 
     fn uri_matches_path(&self, uri: &hyper::Uri, path: &str) -> bool {
@@ -285,6 +328,8 @@ impl Bobby {
         }
 
         // no matching route found
+        self.log_request(_req, log::Level::Warn, "Not found");
+
         Response::html("Not found.").with_status(404).build()
     }
 
@@ -310,39 +355,49 @@ impl Bobby {
         Some(params)
     }
 
-    async fn listen(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn listen(&self) {
         let addr = SocketAddr::from((self.ip, self.port));
-        let listener = TcpListener::bind(addr).await?;
-        let bobby_arc = Arc::new(self.clone());
 
-        loop {
-            let (stream, _) = listener.accept().await?;
-            let io = TokioIo::new(stream);
-            let bobby = Arc::clone(&bobby_arc);
+        if let Ok(listener) = TcpListener::bind(addr).await {
+            let bobby_arc = Arc::new(self.clone());
 
-            tokio::task::spawn(async move {
-                let service = service_fn(move |request| {
-                    let bobby_ref = Arc::clone(&bobby);
+            loop {
+                if let Ok((stream, _)) = listener.accept().await {
+                    let io = TokioIo::new(stream);
+                    let bobby = Arc::clone(&bobby_arc);
 
-                    async move {
-                        bobby_ref.log_request(&request);
-                        bobby_ref.route(&request)
-                    }
-                });
+                    tokio::task::spawn(async move {
+                        let service = service_fn(move |request| {
+                            let bobby_ref = Arc::clone(&bobby);
 
-                if let Err(err) = auto::Builder::new(TokioExecutor::new())
-                    .serve_connection(io, service)
-                    .await
-                {
-                    eprintln!("Error: {}", err);
+                            async move {
+                                bobby_ref.log_request(&request, log::Level::Info, "");
+                                bobby_ref.route(&request)
+                            }
+                        });
+
+                        if let Err(err) = auto::Builder::new(TokioExecutor::new())
+                            .serve_connection(io, service)
+                            .await
+                        {
+                            error!("Error: {}", err);
+                        }
+                    });
+                } else {
+                    error!("Could not start a listener.");
                 }
-            });
+            }
+        } else {
+            error!("Could not bind to configured address and port.");
         }
     }
 
-    pub fn run(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let rt = tokio::runtime::Runtime::new()?;
-        println!("Listening on {}:{} ...", self.ip, self.port);
-        rt.block_on(self.listen())
+    pub fn run(&self) {
+        if let Ok(rt) = tokio::runtime::Runtime::new() {
+            info!("Listening on {}:{} ...", self.ip, self.port);
+            rt.block_on(self.listen());
+        } else {
+            error!("Could not start runtime.");
+        }
     }
 }
